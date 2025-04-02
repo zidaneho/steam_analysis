@@ -86,14 +86,14 @@ def main():
     )
     reviews_df = pd.concat([reviews_df, multi_hot_df],  axis=1)
 
-    stability_ratios_by_game = reviews_df.groupby('game_title').apply(compute_stability_ratio).reset_index()
-    # Sort to see which games have the highest ratio
-    top_stability_games = stability_ratios_by_game.sort_values(by='stability_ratio', ascending=False)
-    print(top_stability_games.head(10))
+    # stability_ratios_by_game = reviews_df.groupby('game_title').apply(compute_stability_ratio).reset_index()
+    # # Sort to see which games have the highest ratio
+    # top_stability_games = stability_ratios_by_game.sort_values(by='stability_ratio', ascending=False)
+    # print(top_stability_games.head(10))
 
     # Count total occurrences of each criticism type
-    # total_crit_counts = reviews_df[mlb.classes_].sum().sort_values(ascending=False).reset_index()
-    # total_crit_counts.columns = ['Criticism Type', 'Count']
+    total_crit_counts = reviews_df[mlb.classes_].sum().sort_values(ascending=False).reset_index()
+    total_crit_counts.columns = ['Criticism Type', 'Count']
 
     # values = total_crit_counts['Count'].values
 
@@ -107,47 +107,50 @@ def main():
     # print('mode:',mode)
     # print('skew:',shape_skew)
 
-    # # Plot the distribution
-    # plt.figure(figsize=(10, 6))
-    # sns.barplot(data=total_crit_counts, x='Criticism Type', y='Count', palette='Reds')
-    # plt.title("Overall Distribution of Criticism Types")
-    # plt.xlabel("Criticism Type")
-    # plt.ylabel("Number of Reviews Tagged")
-    # plt.xticks(rotation=45)
-    # plt.tight_layout()
-    # plt.show()
+    # Plot the distribution
+    plt.figure(figsize=(10, 6))
+    sns.barplot(data=total_crit_counts, x='Criticism Type', y='Count', palette='Reds')
+    plt.title("Overall Distribution of Criticism Types")
+    plt.xlabel("Criticism Type")
+    plt.ylabel("Number of Reviews Tagged")
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.show()
 
 
     
 
-    # Group by genre and sum criticism counts
-    # crit_columns = mlb.classes_.tolist()
-    # genre_crit_summary = reviews_df.groupby(tags)[crit_columns].sum()
+    #Group by genre and sum criticism counts
+    crit_columns = mlb.classes_.tolist()
+    genre_crit_summary = reviews_df.groupby(tags)[crit_columns].sum()
+   
+    
+    
 
-    # # Normalize to get proportion heatmap
-    # genre_crit_normalized = genre_crit_summary.div(genre_crit_summary.sum(axis=1), axis=0)
+    # Convert index to column for Plotly
+    genre_crit_normalized = genre_crit_summary.div(genre_crit_summary.sum(axis=1), axis=0)
+    genre_crit_normalized = genre_crit_normalized.reset_index().rename(columns={tags: "Genre"})
 
-    # plt.figure(figsize=(12, 6))
-    # sns.heatmap(genre_crit_normalized, annot=True, cmap="Reds", linewidths=0.5)
-    # plt.title("Criticism Distribution by Genre")
-    # plt.xlabel("Criticism Type")
-    # plt.ylabel("Genre")
-    # plt.xticks(rotation=45)
-    # plt.tight_layout()
-    # plt.show()
+    # Melt to long format
+    long_df = genre_crit_normalized.melt(id_vars="Genre", var_name="Criticism Type", value_name="Proportion")
 
-    # # Find dominant criticism per genre
-    # dominant_crit = genre_crit_summary.idxmax(axis=1).value_counts().reset_index()
-    # dominant_crit.columns = ['Criticism Type', 'Genre Count']
+    fig = px.density_heatmap(
+        long_df,
+        x="Criticism Type",
+        y="Genre",
+        z="Proportion",
+        color_continuous_scale="Reds",
+        title="Criticism Distribution by Genre (Normalized)",
+        height=600,
+    )
 
-    # plt.figure(figsize=(10, 6))
-    # sns.barplot(data=dominant_crit, x='Criticism Type', y='Genre Count', hue='Criticism Type', palette='Reds', legend=False)
-    # plt.title("Most Dominant Criticism Type per Genre")
-    # plt.xlabel("Criticism Type")
-    # plt.ylabel("Number of Genres Dominated")
-    # plt.xticks(rotation=45)
-    # plt.tight_layout()
-    # plt.show()
+    fig.update_layout(
+        xaxis_title="Criticism Type",
+        yaxis_title="Genre",
+        xaxis_tickangle=45
+    )
+
+    fig.show()
     
     
 def clean_and_tokenize(text):
@@ -200,6 +203,9 @@ def compute_stability_ratio(group):
         'other_or_none_reviews': other_or_none_count,
         'stability_ratio': ratio
     })
+
+
+
 
 main()
 

@@ -14,19 +14,21 @@ def main():
     df = df[df[review_score] < 70.00]
     df = df[df[review_count] >= 500]
     
-    df_sample = df.sample(frac = 0.50).reset_index(drop=True)
+    df_sample = df.sample(frac = 0.10).reset_index(drop=True)
     print('Starting to review the sample. size:',df_sample.shape)
     
     
     all_reviews = []
-    for _, row in tqdm(df_sample.iterrows(), total=len(df_sample), desc="Scraping Reviews"):
-        id = row[appid]  # make sure column is named correctly
+    for row in tqdm(df_sample.itertuples(index=False), total=len(df_sample), desc="Scraping Reviews"):
+        id = getattr(row, appid)
+        game_title_val = getattr(row, title)
+
         game_reviews = get_reviews(id)
-        if len(game_reviews) <= 0:
+        if not game_reviews:
             continue
 
         for review in game_reviews:
-            review['game_title'] = row[title]
+            review['game_title'] = game_title_val
             review['appid'] = id
             all_reviews.append(review)
     reviews_df = pd.DataFrame(all_reviews)
