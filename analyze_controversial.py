@@ -3,7 +3,7 @@ import re
 from nltk.corpus import stopwords
 from collections import Counter
 from scipy import stats
-from scipy.stats import skew
+from scipy.stats import f_oneway
 from clean_data import *
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
@@ -85,6 +85,7 @@ def main():
         index=reviews_df.index
     )
     reviews_df = pd.concat([reviews_df, multi_hot_df],  axis=1)
+    print(reviews_df.columns)
 
     # stability_ratios_by_game = reviews_df.groupby('game_title').apply(compute_stability_ratio).reset_index()
     # # Sort to see which games have the highest ratio
@@ -108,14 +109,14 @@ def main():
     # print('skew:',shape_skew)
 
     # Plot the distribution
-    plt.figure(figsize=(10, 6))
-    sns.barplot(data=total_crit_counts, x='Criticism Type', y='Count', palette='Reds')
-    plt.title("Overall Distribution of Criticism Types")
-    plt.xlabel("Criticism Type")
-    plt.ylabel("Number of Reviews Tagged")
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    plt.show()
+    # plt.figure(figsize=(10, 6))
+    # sns.barplot(data=total_crit_counts, x='Criticism Type', y='Count', palette='Reds')
+    # plt.title("Overall Distribution of Criticism Types")
+    # plt.xlabel("Criticism Type")
+    # plt.ylabel("Number of Reviews Tagged")
+    # plt.xticks(rotation=45)
+    # plt.tight_layout()
+    # plt.show()
 
 
     
@@ -127,30 +128,34 @@ def main():
     
     
 
-    # Convert index to column for Plotly
-    genre_crit_normalized = genre_crit_summary.div(genre_crit_summary.sum(axis=1), axis=0)
-    genre_crit_normalized = genre_crit_normalized.reset_index().rename(columns={tags: "Genre"})
+    # # Convert index to column for Plotly
+    # genre_crit_normalized = genre_crit_summary.div(genre_crit_summary.sum(axis=1), axis=0)
+    # genre_crit_normalized = genre_crit_normalized.reset_index().rename(columns={tags: "Genre"})
 
-    # Melt to long format
-    long_df = genre_crit_normalized.melt(id_vars="Genre", var_name="Criticism Type", value_name="Proportion")
+    # # Melt to long format
+    # long_df = genre_crit_normalized.melt(id_vars="Genre", var_name="Criticism Type", value_name="Proportion")
 
-    fig = px.density_heatmap(
-        long_df,
-        x="Criticism Type",
-        y="Genre",
-        z="Proportion",
-        color_continuous_scale="Reds",
-        title="Criticism Distribution by Genre (Normalized)",
-        height=600,
-    )
+    # fig = px.density_heatmap(
+    #     long_df,
+    #     x="Criticism Type",
+    #     y="Genre",
+    #     z="Proportion",
+    #     color_continuous_scale="Reds",
+    #     title="Criticism Distribution by Genre (Normalized)",
+    #     height=600,
+    # )
 
-    fig.update_layout(
-        xaxis_title="Criticism Type",
-        yaxis_title="Genre",
-        xaxis_tickangle=45
-    )
+    # fig.update_layout(
+    #     xaxis_title="Criticism Type",
+    #     yaxis_title="Genre",
+    #     xaxis_tickangle=45
+    # )
 
-    fig.show()
+    # fig.show()
+    
+
+   
+    test_stability_vs_genre(reviews_df)
     
     
 def clean_and_tokenize(text):
@@ -160,16 +165,7 @@ def clean_and_tokenize(text):
     stop_words = set(stopwords.words('english'))
     return [word for word in tokens if word not in stop_words and len(word) > 2]
 
-def find_most_common(df):
-    all_text = " ".join(df['review_text'].dropna().astype(str))
-    tokens = clean_and_tokenize(all_text)
-    word_counts = Counter(tokens)
-    print(word_counts.most_common(50))
-    # wordcloud = WordCloud(width=800, height=400).generate_from_frequencies(word_counts)
-    # plt.figure(figsize=(12, 6))
-    # plt.imshow(wordcloud, interpolation='bilinear')
-    # plt.axis("off")
-    # plt.show()
+
 def merge_genre(reviews_df):
     df = pd.read_csv('data/games_march2025_cleaned.csv')
     df = clean_data(df)
@@ -203,9 +199,96 @@ def compute_stability_ratio(group):
         'other_or_none_reviews': other_or_none_count,
         'stability_ratio': ratio
     })
+def compute_multiplayer_ratio(group):
+    multiplayer_count = group['multiplayer'].sum()
+    other_or_none_count = len(group) - multiplayer_count  # reviews that do not have stability
+    ratio = multiplayer_count / other_or_none_count if other_or_none_count > 0 else 0
+    return pd.Series({
+        'stability_reviews': multiplayer_count,
+        'other_or_none_reviews': other_or_none_count,
+        'multiplayer_ratio': ratio
+    })
+
+def compute_politics_ratio(group):
+    multiplayer_count = group['politics'].sum()
+    other_or_none_count = len(group) - multiplayer_count  # reviews that do not have stability
+    ratio = multiplayer_count / other_or_none_count if other_or_none_count > 0 else 0
+    return pd.Series({
+        'stability_reviews': multiplayer_count,
+        'other_or_none_reviews': other_or_none_count,
+        'politics_ratio': ratio
+    })
+
+def plot_genre_vs_politics(reviews_df):
+    grouped_ratios = reviews_df.groupby(['game_title', tags]).apply(compute_politics_ratio).reset_index()
+
+    anova_data = grouped_ratios.groupby(tags)['politics_ratio'].apply(list)
+
+    # Run ANOVA
+    f_stat, p_val = f_oneway(*anova_data)
+
+    print("F-stat:", f_stat)
+    print("p-value:", p_val)
+    # Plot boxplot
+    plt.figure(figsize=(12, 6))
+    sns.boxplot(data=grouped_ratios, x=tags, y='politics_ratio', palette='Reds')
+    plt.xticks(rotation=45)
+    plt.xlabel('Genre')
+    plt.ylabel('Politics Criticism Ratio')
+    plt.title('Distribution of Politics Criticism Ratio Across Genres')
+    plt.tight_layout()
+    plt.show()
+
+def plot_genre_vs_stability(reviews_df):
+    grouped_ratios = reviews_df.groupby(['game_title', tags]).apply(compute_stability_ratio).reset_index()
+
+    anova_data = grouped_ratios.groupby(tags)['stability_ratio'].apply(list)
+
+    # Run ANOVA
+    f_stat, p_val = f_oneway(*anova_data)
+
+    print("F-stat:", f_stat)
+    print("p-value:", p_val)
+    # Plot boxplot
+    plt.figure(figsize=(12, 6))
+    sns.boxplot(data=grouped_ratios, x=tags, y='stability_ratio', palette='Reds')
+    plt.xticks(rotation=45)
+    plt.xlabel('Genre')
+    plt.ylabel('Stability Criticism Ratio')
+    plt.title('Distribution of Stability Criticism Ratio Across Genres')
+    plt.tight_layout()
+    plt.show()
+
+def test_stability_vs_genre(reviews_df,top_n=100):
+    # Step 1: Filter to top N genres to avoid rare-genre noise
+
+    top_genres = reviews_df[tags].value_counts().nlargest(top_n).index
+    filtered_df = reviews_df[reviews_df[tags].isin(top_genres)]
+    # Step 2: Create a contingency table of genre vs stability tag (0/1)
+    contingency = pd.crosstab(filtered_df[tags], filtered_df['stability'])
+
+    # Step 3: Run the chi-squared test
+    chi2, p, dof, expected = chi2_contingency(contingency)
+
+    print("Chi-squared Statistic:", chi2)
+    print("Degrees of Freedom:", dof)
+    print("p-value:", p)
+
+    if p < 0.05:
+        print("✅ Reject the null hypothesis: Stability criticism is associated with game genre.")
+    else:
+        print("❌ Fail to reject the null hypothesis: No significant association between stability criticism and genre.")
+
+    contingency_norm = contingency.div(contingency.sum(axis=1), axis=0)
+
+    contingency_norm.plot(kind='bar', stacked=True, figsize=(12, 6), colormap='Reds')
+    plt.ylabel('Proportion of Reviews')
+    plt.title('Stability Criticism Proportion by Genre')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.show()
 
 
-
-
-main()
+if __name__ == "__main__":
+    main()
 
