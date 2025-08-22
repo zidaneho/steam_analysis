@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background-color: #1a1a1a;
+  color: #ffffff;
+}
+
+textarea {
+  background-color: #2a2a2a;
+  color: #ffffff;
+  border-color: #4a4a4a;
+}
+
+textarea:focus {
+  border-color: #3b82f6;
+  ring-color: #3b82f6;
+}
+
+button {
+  background-color: #3b82f6;
+}
+
+button:hover {
+  background-color: #2563eb;
+}
