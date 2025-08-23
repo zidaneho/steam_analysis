@@ -1,0 +1,26 @@
+{
+  "builds": [
+    {
+      "src": "api/**/*.py",
+      "use": "@vercel/python",
+      "config": { "maxLambdaSize": "50mb" }
+    },
+    {
+      "src": "package.json",
+      "use": "@vercel/next",
+      "config": {
+        "distDir": "web/.next"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "api/"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "web/$1"
+    }
+  ]
+}

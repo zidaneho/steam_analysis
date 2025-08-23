@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+pandas
+scikit-learn
+sentence-transformers
+aiohttp
+numpy
+pydantic
+python-multipart
+google-generativeai 
+python-dotenv

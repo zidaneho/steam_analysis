@@ -6,6 +6,7 @@ import asyncio
 import aiohttp
 import pandas as pd
 import numpy as np
+import io
 import google.generativeai as genai
 from fastapi import FastAPI
 from pydantic import BaseModel
@@ -43,23 +44,42 @@ vectorizer = TfidfVectorizer()
 unique_tags_list = []
 tag_embeddings_tfidf = None
 
+# IMPORTANT: Replace these with the actual public URLs where you host your data files.
+# You can use services like AWS S3, Google Cloud Storage, or others.
+GAMES_DATA_URL = "https://your-hosting-service.com/path/to/your/games_data.pkl"
+GAME_EMBEDDINGS_URL = "https://your-hosting-service.com/path/to/your/game_embeddings.npy"
+
 @app.on_event("startup")
-def load_preprocessed_data():
+async def load_preprocessed_data():
     global steam_data, game_embeddings, model, unique_tags_list, tag_embeddings_tfidf, vectorizer
     print("API starting up: Loading models and pre-processed data...")
     model = SentenceTransformer('all-MiniLM-L6-v2')
+    
     try:
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        data_path = os.path.join(script_dir, 'preprocessed_data', 'games_data.pkl')
-        embeddings_path = os.path.join(script_dir, 'preprocessed_data', 'game_embeddings.npy')
-        steam_data = pd.read_pickle(data_path)
-        game_embeddings = np.load(embeddings_path)
+        async with aiohttp.ClientSession() as session:
+            # Fetch and load games_data.pkl
+            print(f"Fetching games data from {GAMES_DATA_URL}...")
+            async with session.get(GAMES_DATA_URL) as response:
+                response.raise_for_status()
+                steam_data = pd.read_pickle(await response.read())
+            print("✅ Successfully loaded games_data.pkl.")
+
+            # Fetch and load game_embeddings.npy
+            print(f"Fetching game embeddings from {GAME_EMBEDDINGS_URL}...")
+            async with session.get(GAME_EMBEDDINGS_URL) as response:
+                response.raise_for_status()
+                # Save to a temporary in-memory buffer to be loaded by numpy
+                with np.load(io.BytesIO(await response.read())) as data:
+                    game_embeddings = data
+            print("✅ Successfully loaded game_embeddings.npy.")
+
         all_tags = set(steam_data['tags'].str.cat(sep=' ').split())
         unique_tags_list = list(all_tags)
         tag_embeddings_tfidf = vectorizer.fit_transform(unique_tags_list)
-        print("✅ Successfully loaded pre-processed data and models.")
-    except FileNotFoundError:
-        print("❌ FATAL ERROR: Pre-processed data not found!")
+        print("✅ Successfully initialized models and data.")
+        
+    except Exception as e:
+        print(f"❌ FATAL ERROR: Could not load pre-processed data. Error: {e}")
         steam_data = None
 
 # --------------------------------------------------------------------------
