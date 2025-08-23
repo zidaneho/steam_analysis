@@ -4,7 +4,7 @@ This project is a full-stack research tool designed to help game developers anal
 
 ---
 
-## 🚀 Features
+## Features
 
 -   **Competitor Identification**: Uses natural language processing to find the top 5 most similar games to your concept.
 -   **Uniqueness Score**: Calculates a "uniqueness score" to gauge how crowded the market is for your game idea.
@@ -14,7 +14,7 @@ This project is a full-stack research tool designed to help game developers anal
 
 ---
 
-## 🛠️ How It Works
+## How It Works
 
 The tool is comprised of a data pipeline, a backend API, and a web frontend.
 
@@ -39,7 +39,7 @@ The tool is comprised of a data pipeline, a backend API, and a web frontend.
 
 ---
 
-## 🏆 Technical Showcase (for Resumes)
+## Tech Stack
 
 This project demonstrates a range of modern software engineering and data science skills:
 
