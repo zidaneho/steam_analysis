@@ -41,23 +41,6 @@ interface AnalysisResult {
 
 // --- SVG Icon Components for UI ---
 
-const UserIcon = () => (
-  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center">
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      className="w-5 h-5 text-gray-400"
-    >
-      <path
-        fillRule="evenodd"
-        d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z"
-        clipRule="evenodd"
-      />
-    </svg>
-  </div>
-);
-
 const SendIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -134,11 +117,24 @@ export default function Home() {
         </li>
       ));
   };
+  const ProgressBar = ({ isLoading }: { isLoading: boolean }) => {
+    // We use CSS transitions for a smooth fade-in/fade-out effect
+    return (
+      <div
+        className={`fixed top-0 left-0 w-full h-1 z-50 transition-opacity duration-300 ${
+          isLoading ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        <div className="h-full w-full bg-blue-500 animate-pulse"></div>
+      </div>
+    );
+  };
 
   const hasSubmitted = isLoading || results || error;
 
   return (
-    <main className="min-h-screen bg-gray-900 text-gray-200 p-4 font-sans flex flex-col justify-center items-center">
+    <main className="min-h-screen text-gray-200 p-4 font-sans flex flex-col justify-center items-center">
+      <ProgressBar isLoading={isLoading} />
       {/* --- Main Content Area (Scrollable) --- */}
       <div
         className={`w-full max-w-3xl mx-auto flex-1 overflow-y-auto pb-24 transition-opacity duration-500 ${
@@ -149,7 +145,6 @@ export default function Home() {
           <div className="space-y-10 py-8">
             {/* --- User's Prompt --- */}
             <div className="flex gap-4">
-              <UserIcon />
               <p className="font-medium pt-1 whitespace-pre-wrap">
                 {submittedPrompt}
               </p>
@@ -158,14 +153,6 @@ export default function Home() {
             {/* --- AI's Response --- */}
             <div className="flex gap-4">
               <div className="w-full">
-                {isLoading && (
-                  <div className="flex items-center space-x-2 text-gray-400">
-                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse [animation-delay:-0.3s]"></div>
-                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse [animation-delay:-0.15s]"></div>
-                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                    <span>Analyzing...</span>
-                  </div>
-                )}
                 {error && <div className="text-red-400">{error}</div>}
                 {results && (
                   <div className="space-y-8">
@@ -238,23 +225,6 @@ export default function Home() {
                       </ul>
                     </div>
 
-                    {/* Predicted Tags */}
-                    <div>
-                      <h2 className="text-2xl font-semibold mb-3">
-                        Predicted Tags
-                      </h2>
-                      <div className="flex flex-wrap gap-2">
-                        {results.predicted_tags.map((tag, index) => (
-                          <span
-                            key={index}
-                            className="bg-blue-500/80 text-white px-3 py-1 rounded-full text-sm font-medium"
-                          >
-                            {tag.name}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
                     <div>
                       <h2 className="text-2xl font-semibold mb-3">
                         Raw Reviews
@@ -292,8 +262,7 @@ export default function Home() {
             className="absolute px-4 py-2 bottom-3 right-3 rounded-full bg-blue-600 text-white hover:bg-blue-500 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
             disabled={isLoading || !prompt.trim()}
           >
-            {/* <SendIcon /> */}
-            Submit
+            <SendIcon />
           </button>
         </form>
       </div>
