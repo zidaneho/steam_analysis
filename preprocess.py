@@ -44,6 +44,8 @@ except FileNotFoundError:
 # --- 3. Clean and Prepare the Text ---
 print("Cleaning and preparing text data...")
 steam = steam[steam['supported_languages'].str.contains("English")]
+steam = steam[steam['num_reviews_total'] > 500]
+
 
 
 steam['combined_text'] =  steam['detailed_description'].apply(better_clean_text) + ' ' + steam['tags'].apply(clean_tags)
