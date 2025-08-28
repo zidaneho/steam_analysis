@@ -27,7 +27,8 @@ app = FastAPI()
 
 origins = [
     "http://0.0.0.0",  # Your Next.js frontend
-    #"http://127.0.0.1:3000", # Also good to include this
+    "http://127.0.0.1:3000", # Also good to include this
+    "http://localhost:3000",
     # Add your Vercel deployment URL here when you deploy
     # "https://your-project-name.vercel.app" 
 ]
