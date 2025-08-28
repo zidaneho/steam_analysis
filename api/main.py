@@ -25,9 +25,16 @@ load_dotenv(override=True)  # Load environment variables from .env file
 
 app = FastAPI()
 
+origins = [
+    "http://localhost:3000",  # Your Next.js frontend
+    "http://127.0.0.1:3000", # Also good to include this
+    # Add your Vercel deployment URL here when you deploy
+    # "https://your-project-name.vercel.app" 
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,  # Use the specific list of origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -46,8 +53,8 @@ tag_embeddings_tfidf = None
 
 # IMPORTANT: Replace these with the actual public URLs where you host your data files.
 # You can use services like AWS S3, Google Cloud Storage, or others.
-GAMES_DATA_URL = "https://your-hosting-service.com/path/to/your/games_data.pkl"
-GAME_EMBEDDINGS_URL = "https://your-hosting-service.com/path/to/your/game_embeddings.npy"
+GAMES_DATA_URL = "https://github.com/zidaneho/steam_analysis/releases/download/v1.0.0/games_data.pkl"
+GAME_EMBEDDINGS_URL = "https://github.com/zidaneho/steam_analysis/releases/download/v1.0.0/game_embeddings.npy"
 
 @app.on_event("startup")
 async def load_preprocessed_data():
@@ -61,7 +68,7 @@ async def load_preprocessed_data():
             print(f"Fetching games data from {GAMES_DATA_URL}...")
             async with session.get(GAMES_DATA_URL) as response:
                 response.raise_for_status()
-                steam_data = pd.read_pickle(await response.read())
+                steam_data = pd.read_pickle(io.BytesIO(await response.read()))
             print("✅ Successfully loaded games_data.pkl.")
 
             # Fetch and load game_embeddings.npy
@@ -69,8 +76,7 @@ async def load_preprocessed_data():
             async with session.get(GAME_EMBEDDINGS_URL) as response:
                 response.raise_for_status()
                 # Save to a temporary in-memory buffer to be loaded by numpy
-                with np.load(io.BytesIO(await response.read())) as data:
-                    game_embeddings = data
+                game_embeddings = np.load(io.BytesIO(await response.read()))
             print("✅ Successfully loaded game_embeddings.npy.")
 
         all_tags = set(steam_data['tags'].str.cat(sep=' ').split())
@@ -90,6 +96,7 @@ class Prompt(BaseModel):
     description: str
 
 class Game(BaseModel):
+    id: int
     name: str
     score: float
     header_image_url: str
@@ -265,9 +272,11 @@ async def analyze_description(prompt: Prompt):
         game_name = steam_data.iloc[i]['name']
         header_image_url = steam_data.iloc[i]['header_image_url']
         store_page_url = steam_data.iloc[i]['store_page_url']
+        app_id = steam_data.iloc[i]['appid']
         
     
         similar_games.append({
+            "id": app_id,
             "name": game_name,
             "score": float(similarity_scores[0][i]),
             "header_image_url": header_image_url,
