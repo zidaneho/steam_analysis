@@ -30,7 +30,8 @@ origins = [
     "http://127.0.0.1:3000", # Also good to include this
     "http://localhost:3000",
     # Add your Vercel deployment URL here when you deploy
-    "https://steam-analysis-bm5er9kmk-zidanehos-projects.vercel.app/" 
+    "https://steam-analysis-bm5er9kmk-zidanehos-projects.vercel.app/" ,
+    "https://steam-analysis-frontend.onrender.com"
 ]
 
 app.add_middleware(
