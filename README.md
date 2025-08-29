@@ -83,7 +83,7 @@ To run this project, you need to run the backend API and the frontend applicatio
         GOOGLE_API_KEY="YOUR_API_KEY_HERE"
         ```
 4.  **Run the preprocessing script**:
-    -   Before running the API for the first time, you need to process the data. Make sure you have downloaded the dataset into the `data/` directory using the `update_data.sh` script.
+    -   If updating the data, run the preprocesser first. Then, upload the data to GitHub
     ```bash
     python ../preprocess.py
     ```
@@ -91,7 +91,6 @@ To run this project, you need to run the backend API and the frontend applicatio
     ```bash
     uvicorn main:app --reload
     ```
-    The API will be available at `http://127.0.0.1:8000`.
 
 ### Frontend Setup
 
@@ -102,16 +101,17 @@ To run this project, you need to run the backend API and the frontend applicatio
 2.  **Install Node.js dependencies**:
     ```bash
     npm install
+
+    npm run build
     ```
 3.  **Start the Next.js development server**:
     ```bash
-    npm run dev
+    npm run start
     ```
-    The web application will be available at `http://localhost:3000`.
 
 ---
 
-## ቴክ Tech Stack
+## Tech Stack
 
 -   **Backend**: Python, FastAPI, `sentence-transformers`, `scikit-learn`, `pandas`, `numpy`, Google Gemini API
 -   **Frontend**: Next.js, React, TypeScript, TailwindCSS
